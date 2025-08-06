@@ -1,0 +1,10 @@
+fastapi
+pydantic
+uvicorn
+unittest2
+python-dotenv
+loguru
+requests
+flake8
+pydantic[email]
+psycopg2

@@ -1,0 +1,17 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+__pycache__/
+Assignment 1/data/db
+venv
+.env
+.gitignore
+__init__.py
+data/
+README.md
+docker-compose.yml
+DB/docker-compose.yml
+
