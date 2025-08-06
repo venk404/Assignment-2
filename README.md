@@ -37,29 +37,47 @@ This project is a simple Student Management API built using FastAPI. It allows f
  ```bash
   make all
 ```
-## If you dont have make installed then you can manually run it.
+### If you dont have make installed then you can manually run it.
 
 3) Navigate to the DB folder and run docker-compose to start the database.
  ```bash
   cd DB
   docker-compose up -d
 ```
-4) After running the DB, return to the project directory and build the Docker image for the REST API.
- ```bash
-  cd..
-  docker build -t ${IMAGE_NAME}:${IMAGE_VERSION} .
+
+
+
+### Build & Run the Migration Docker Image
+
+4) Use the following command to build the Docker image responsible for running schema migrations:
+
+```bash
+docker build -t ${MIGRATION_IMAGE_NAME}:${MIGRATION_IMAGE_VERSION} -f DB/Schemas/Dockerfile .
+
+docker run --rm --name ${MIGRATION_CONTAINER_NAME} --network ${DOCKER_NETWORK} \
+  -e POSTGRES_DB=${POSTGRES_DB} \
+  -e POSTGRES_USER=${POSTGRES_USER} \
+  -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+  -e POSTGRES_PORT=${POSTGRES_PORT} \
+  -e POSTGRES_HOST=${POSTGRES_HOST} \
+  ${MIGRATION_IMAGE_NAME}:${MIGRATION_IMAGE_VERSION}
 ```
 
-5) Let’s run the container now. This will connect to the database, create the schema, and start the Restapi in container on the given port.
+### Build & Run the API Docker Image
+
+5) Let start the Restapi in container on the given port.
  ```bash
   cd..
-  docker run --rm --name ${CONTAINER_NAME} -d -p ${APP_PORT}:8000 --network ${DOCKER_NETWORK} \
+
+  docker build -t ${API_IMAGE_NAME}:${API_IMAGE_VERSION} .
+
+  docker run --rm --name ${API_CONTAINER_NAME} -d -p ${APP_PORT}:8000 --network ${DOCKER_NETWORK} \
   -e POSTGRES_DB=${} \
   -e POSTGRES_USER=${} \
   -e POSTGRES_PASSWORD=${} \
   -e POSTGRES_PORT=${} \
   -e POSTGRES_HOST=${} \
-  ${IMAGE_NAME}:${IMAGE_VERSION}
+  ${API_IMAGE_NAME}:${API_IMAGE_VERSION}
 ```
 
 

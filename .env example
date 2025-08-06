@@ -3,10 +3,5 @@ POSTGRES_USER=
 POSTGRES_PASSWORD=
 #This should be service name of DB from docker-compose file - 
 POSTGRES_HOST=DB
-POSTGRES_PORT=
-CONTAINER_NAME=
-#Network is specfied in docker-compose file
-DOCKER_NETWORK=
-APP_PORT=
-IMAGE_NAME=
-IMAGE_VERSION=v1.0.0
+POSTGRES_PORT=5432
+APP_PORT=8000

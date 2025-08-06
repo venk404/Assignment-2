@@ -3,6 +3,6 @@ POSTGRES_USER=
 POSTGRES_PASSWORD=
 #This should be service name of DB from docker-compose file
 POSTGRES_HOST=DB
-POSTGRES_PORT=
+POSTGRES_PORT=5432
 
 

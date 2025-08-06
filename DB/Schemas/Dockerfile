@@ -29,7 +29,7 @@ RUN apk add --no-cache libpq=17.5-r0
 COPY --from=builder /app/venv /app/venv
 
 # Copy application code
-COPY Create_Student.py .
+COPY DB/Schemas/Create_Student.py .
 
 # Set PATH to use virtual environment
 ENV PATH="/app/venv/bin:$PATH"

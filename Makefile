@@ -4,76 +4,82 @@ VENV := venv
 
 include .env
 
-all: Start_DB docker-build docker-run
+API_IMAGE_NAME := restapi
+API_IMAGE_VERSION := v1.0.0	
+API_CONTAINER_NAME := restapi_container
+MIGRATION_IMAGE_NAME := migration
+MIGRATION_IMAGE_VERSION := v1.0.0
+MIGRATION_CONTAINER_NAME := migration_container
+DOCKER_NETWORK := dem
+
+
+
+all: Start_DB install docker-migration-build  docker-migration-run docker-build docker-run
+
 
 Start_DB:
 ifeq ($(OS),Windows_NT)
-	cd DB\Schemas
+	cd DB
 	docker-compose up -d
 else
-	cd DB\Schemas
+	cd DB
 	docker-compose up -d
 endif
 
-docker-build:
+docker-migration-build:
 ifeq ($(OS),Windows_NT)
-	docker build -t ${IMAGE_NAME}:${IMAGE_VERSION} .
+	docker build -t ${MIGRATION_IMAGE_NAME}:${MIGRATION_IMAGE_VERSION} -f DB/Schemas/Dockerfile  .
 else
-	docker build -t ${IMAGE_NAME}:${IMAGE_VERSION} .
+	docker build -t ${MIGRATION_IMAGE_NAME}:${MIGRATION_IMAGE_VERSION} -f DB/Schemas/Dockerfile .
 endif
 
-docker-run:
+docker-migration-run:
 ifeq ($(OS),Windows_NT)
-	docker run --rm --name ${CONTAINER_NAME} -d -p ${APP_PORT}:8000 --network ${DOCKER_NETWORK} \
+	docker  run --rm --name ${MIGRATION_CONTAINER_NAME} --network ${DOCKER_NETWORK} \
 	-e POSTGRES_DB=${POSTGRES_DB} \
 	-e POSTGRES_USER=${POSTGRES_USER} \
 	-e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
 	-e POSTGRES_PORT=${POSTGRES_PORT} \
 	-e POSTGRES_HOST=${POSTGRES_HOST} \
-	${IMAGE_NAME}:${IMAGE_VERSION}
+	${MIGRATION_IMAGE_NAME}:${MIGRATION_IMAGE_VERSION}
+
 else
-	docker run --rm --name ${CONTAINER_NAME} -d -p $(APP_PORT):8000 --network ${DOCKER_NETWORK} \
+	@docker run --rm --name ${MIGRATION_CONTAINER_NAME} --network ${DOCKER_NETWORK} \
 	-e POSTGRES_DB=$(POSTGRES_DB) \
 	-e POSTGRES_USER=$(POSTGRES_USER) \
 	-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
 	-e POSTGRES_PORT=$(POSTGRES_PORT) \
 	-e POSTGRES_HOST=$(POSTGRES_HOST) \
-	$(IMAGE_NAME):$(IMAGE_VERSION)
+	$(MIGRATION_IMAGE_NAME):$(MIGRATION_IMAGE_VERSION)
 endif
 
-install: $(VENV)/Scripts/activate
-
-$(VENV)/Scripts/activate: requirements.txt
-	python -m venv $(VENV)
-
+docker-build:
 ifeq ($(OS),Windows_NT)
-	$(VENV)\Scripts\activate.ps1
-	$(VENV)\Scripts\python -m pip install --upgrade pip
-	$(VENV)\Scripts\pip install -r requirements.txt
+	docker build -t ${API_IMAGE_NAME}:${API_IMAGE_VERSION} .
 else
-	chmod +x $(VENV)/bin/activate
-	$(VENV)/bin/activate
-	$(VENV)/bin/python -m pip install --upgrade pip
-	$(VENV)/bin/pip install -r requirements.txt
+	docker build -t ${API_IMAGE_NAME}:${API_IMAGE_VERSION} .
 endif
 
-
-
-#Creating Schema from outside of docker container
-Schema-creation:
+docker-run:
 ifeq ($(OS),Windows_NT)
-	$(VENV)\Scripts\python DB\Schemas\Create_Student.py
+	docker run --name ${API_CONTAINER_NAME} -d -p ${APP_PORT}:8000 --network ${DOCKER_NETWORK} \
+	-e POSTGRES_DB=${POSTGRES_DB} \
+	-e POSTGRES_USER=${POSTGRES_USER} \
+	-e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+	-e POSTGRES_PORT=${POSTGRES_PORT} \
+	-e POSTGRES_HOST=${POSTGRES_HOST} \
+	${API_IMAGE_NAME}:${API_IMAGE_VERSION}
 else
-	$(VENV)/bin/python DB/Schemas/Create_Student.py
+	@docker run --rm --name ${API_CONTAINER_NAME} -d -p $(APP_PORT):8000 --network ${DOCKER_NETWORK} \
+	-e POSTGRES_DB=$(POSTGRES_DB) \
+	-e POSTGRES_USER=$(POSTGRES_USER) \
+	-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+	-e POSTGRES_PORT=$(POSTGRES_PORT) \
+	-e POSTGRES_HOST=$(POSTGRES_HOST) \
+	$(API_IMAGE_NAME):$(API_IMAGE_VERSION)
 endif
 
-# Define the run step
-run:
-ifeq ($(OS),Windows_NT)
-	$(VENV)\Scripts\uvicorn Main:app --reload --host 0.0.0.0 --port 8000
-else
-	$(VENV)/bin/uvicorn Main:app --reload --host 0.0.0.0 --port 8000
-endif
+
 
 # Define a clean step
 clean:
@@ -85,11 +91,4 @@ else
 	find . -type d -name "data" -exec rm -rf {} +
 endif
 
-test:
-ifeq ($(OS),Windows_NT)
-	$(VENV)\Scripts\python test/test.py
-else
-	$(VENV)/bin/python test/test.py
-endif
-
-.PHONY: all install run clean
+.PHONY: all Start_DB install docker-migration-build clean 
